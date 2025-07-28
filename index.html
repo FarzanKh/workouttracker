@@ -12,36 +12,58 @@
         Visualization & Content Choices: The core information is the workout list. Goal: Allow users to track weekly completion. Presentation: Styled HTML cards for each workout day. Interaction: Users click checkboxes for each of the 7 days. JavaScript saves the state to browser localStorage, making the app persistent without a database. A dynamic progress bar for each card provides instant visual feedback on completion. Justification: This approach turns a static list into a functional, stateful application, improving user engagement and utility. Method: Vanilla JavaScript for all logic, Tailwind CSS for styling. No complex libraries like Chart.js are needed, as progress bars are implemented with simple HTML/CSS.
         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
     -->
+    <script>
+        // Configure Tailwind CSS to use the 'class' strategy for dark mode
+        tailwind.config = {
+          darkMode: 'class',
+        }
+    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8f7f4; /* Warm neutral background */
-        }
-        .day-label {
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            transform: rotate(180deg);
-            white-space: nowrap;
         }
         .progress-bar-fill {
             transition: width 0.3s ease-in-out;
         }
+        /* Toggle Switch Styles */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #4f46e5;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #4f46e5;
+        }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
 
     <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-7xl">
+        
+        <div class="flex justify-end mb-4">
+            <div class="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <label for="theme-toggle" class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="theme-toggle" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-300 dark:bg-gray-700 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                </label>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </div>
+        </div>
 
         <header class="text-center mb-8">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">Interactive Workout Tracker</h1>
-            <p class="text-gray-600 mt-2 max-w-2xl mx-auto">Track your weekly workout progress. Your selections are saved automatically in your browser so you can pick up where you left off.</p>
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">Interactive Workout Tracker</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2 max-w-2xl mx-auto">Track your weekly workout progress. Your selections are saved automatically in your browser so you can pick up where you left off.</p>
         </header>
 
         <main id="workout-container" class="space-y-8">
             <!-- Workout cards will be dynamically inserted here -->
         </main>
 
-        <footer class="text-center mt-12 text-gray-500 text-sm">
+        <footer class="text-center mt-12 text-gray-500 dark:text-gray-400 text-sm">
             <p>Designed to help you stay consistent on your fitness journey.</p>
         </footer>
 
@@ -49,38 +71,73 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const themeToggle = document.getElementById('theme-toggle');
+
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    themeToggle.checked = true;
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    themeToggle.checked = false;
+                }
+            };
+
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else if (prefersDark) {
+                applyTheme('dark');
+            } else {
+                applyTheme('light');
+            }
+
+            themeToggle.addEventListener('change', () => {
+                const theme = themeToggle.checked ? 'dark' : 'light';
+                localStorage.setItem('theme', theme);
+                applyTheme(theme);
+            });
+            
             const workoutData = {
                 push: {
                     title: "Push Day",
                     exercises: [
-                        { name: "Bench Press", description: "Lie on a flat bench, lower the barbell to your mid-chest, then press it back up." },
-                        { name: "Overhead Press", description: "Sit or stand, press dumbbells overhead until arms are fully extended." },
-                        { name: "Incline Dumbbell Press", description: "Lie on an incline bench, press dumbbells up from chest level until arms are extended." },
-                        { name: "Lateral Raises", description: "Stand and raise dumbbells out to your sides until they are at shoulder level." },
-                        { name: "Tricep Pushdowns", description: "Use a high pulley to push a bar or rope down until your arms are fully extended." },
-                        { name: "Skull Crushers", description: "Lie on a bench and lower a barbell or EZ bar towards your forehead, then extend back up." }
+                        { name: "Bench Press", goal: "3 sets of 5-8 reps", description: "Lie on a flat bench, lower the barbell to your mid-chest, then press it back up." },
+                        { name: "Overhead Press", goal: "3 sets of 8-12 reps", description: "Sit or stand, press dumbbells overhead until arms are fully extended." },
+                        { name: "Incline Dumbbell Press", goal: "3 sets of 8-12 reps", description: "Lie on an incline bench, press dumbbells up from chest level until arms are extended." },
+                        { name: "Lateral Raises", goal: "4 sets of 12-15 reps", description: "Stand and raise dumbbells out to your sides until they are at shoulder level." },
+                        { name: "Tricep Pushdowns", goal: "3 sets of 10-15 reps", description: "Use a high pulley to push a bar or rope down until your arms are fully extended." },
+                        { name: "Skull Crushers", goal: "3 sets of 10-15 reps", description: "Lie on a bench and lower a barbell or EZ bar towards your forehead, then extend back up." },
+                        { name: "Dumbbell Flyes", goal: "3 sets of 10-15 reps", description: "Lie on a flat bench and lower dumbbells in a wide arc until you feel a stretch in your chest." },
+                        { name: "Cable Crossover", goal: "3 sets of 12-15 reps", description: "From a cable machine, bring your hands together in front of your body in a hugging motion." },
+                        { name: "Dips", goal: "3 sets to failure", description: "On parallel bars, lower your body until shoulders are below elbows, then press up." }
                     ]
                 },
                 pull: {
                     title: "Pull Day",
                     exercises: [
-                        { name: "Pull-ups / Lat Pulldowns", description: "Hang from a bar and pull your chest to it, or pull a bar down to your upper chest." },
-                        { name: "Barbell Rows", description: "Bend over with a straight back and pull a barbell towards your lower chest." },
-                        { name: "T-Bar Rows", description: "Pull a T-bar handle towards your chest, keeping your back straight." },
-                        { name: "Face Pulls", description: "Use a cable machine to pull a rope attachment towards your face, squeezing your rear delts." },
-                        { name: "Barbell Curls", description: "Stand and curl a barbell towards your shoulders, keeping elbows at your sides." },
-                        { name: "Hammer Curls", description: "Curl dumbbells with palms facing each other, like swinging a hammer." }
+                        { name: "Pull-ups / Lat Pulldowns", goal: "3 sets to failure or 8-12 reps", description: "Hang from a bar and pull your chest to it, or pull a bar down to your upper chest." },
+                        { name: "Barbell Rows", goal: "3 sets of 6-10 reps", description: "Bend over with a straight back and pull a barbell towards your lower chest." },
+                        { name: "T-Bar Rows", goal: "3 sets of 8-12 reps", description: "Pull a T-bar handle towards your chest, keeping your back straight." },
+                        { name: "Face Pulls", goal: "4 sets of 15-20 reps", description: "Use a cable machine to pull a rope attachment towards your face, squeezing your rear delts." },
+                        { name: "Barbell Curls", goal: "3 sets of 8-12 reps", description: "Stand and curl a barbell towards your shoulders, keeping elbows at your sides." },
+                        { name: "Hammer Curls", goal: "3 sets of 10-15 reps", description: "Curl dumbbells with palms facing each other, like swinging a hammer." },
+                        { name: "Dumbbell Rows", goal: "3 sets of 8-12 reps per arm", description: "With one knee on a bench, pull a dumbbell up to your chest, keeping your back straight." },
+                        { name: "Seated Cable Rows", goal: "3 sets of 10-15 reps", description: "Sit at a cable machine and pull the handle towards your abdomen, squeezing your back." },
+                        { name: "Preacher Curls", goal: "3 sets of 10-15 reps", description: "On a preacher bench, curl an EZ bar or dumbbell towards your shoulders." }
                     ]
                 },
                 legs: {
                     title: "Leg Day",
                     exercises: [
-                        { name: "Squats", description: "With a barbell on your back, lower your hips as if sitting in a chair, then stand back up." },
-                        { name: "Romanian Deadlifts", description: "Hinge at your hips to lower a barbell, keeping legs straight, to stretch your hamstrings." },
-                        { name: "Leg Press", description: "Sit on the machine and push the platform away by extending your knees." },
-                        { name: "Leg Curls", description: "Lie face down and curl a padded lever up towards your glutes with your legs." },
-                        { name: "Leg Extensions", description: "Sit on the machine and extend your legs against a padded lever until they are straight." },
-                        { name: "Calf Raises", description: "Stand on an elevated surface and press up onto your toes, then lower your heels." }
+                        { name: "Squats", goal: "3 sets of 6-10 reps", description: "With a barbell on your back, lower your hips as if sitting in a chair, then stand back up." },
+                        { name: "Romanian Deadlifts", goal: "3 sets of 8-12 reps", description: "Hinge at your hips to lower a barbell, keeping legs straight, to stretch your hamstrings." },
+                        { name: "Leg Press", goal: "3 sets of 10-15 reps", description: "Sit on the machine and push the platform away by extending your knees." },
+                        { name: "Leg Curls", goal: "3 sets of 12-15 reps", description: "Lie face down and curl a padded lever up towards your glutes with your legs." },
+                        { name: "Leg Extensions", goal: "3 sets of 12-15 reps", description: "Sit on the machine and extend your legs against a padded lever until they are straight." },
+                        { name: "Calf Raises", goal: "4 sets of 15-20 reps", description: "Stand on an elevated surface and press up onto your toes, then lower your heels." }
                     ]
                 }
             };
@@ -93,31 +150,34 @@
                 for (const dayKey in workoutData) {
                     const dayData = workoutData[dayKey];
                     const card = document.createElement('div');
-                    card.className = 'bg-white rounded-xl shadow-md overflow-hidden';
+                    card.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden';
                     card.innerHTML = `
                         <div class="p-6">
-                            <h2 class="text-2xl font-bold text-gray-900 mb-2">${dayData.title}</h2>
-                            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-                                <div id="progress-${dayKey}" class="bg-blue-600 h-2.5 rounded-full progress-bar-fill" style="width: 0%"></div>
+                            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-900 mb-4 inline-block bg-yellow-300 px-3 py-1 rounded-lg">${dayData.title}</h2>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-4">
+                                <div id="progress-${dayKey}" class="bg-blue-600 dark:bg-blue-500 h-2.5 rounded-full progress-bar-fill" style="width: 0%"></div>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="min-w-full text-sm text-left">
-                                    <thead class="border-b">
+                                    <thead class="border-b border-gray-200 dark:border-gray-700">
                                         <tr>
-                                            <th class="py-2 pr-2 font-medium">Workout</th>
-                                            ${[...Array(7)].map((_, i) => `<th class="w-12 text-center font-normal text-gray-500 py-2">Day ${i + 1}</th>`).join('')}
+                                            <th class="py-2 pr-2 font-medium text-gray-600 dark:text-gray-300">Workout</th>
+                                            ${[...Array(7)].map((_, i) => `<th class="text-center font-normal text-gray-500 dark:text-gray-400 py-2 px-3">Day ${i + 1}</th>`).join('')}
                                         </tr>
                                     </thead>
                                     <tbody>
                                         ${dayData.exercises.map(exercise => `
-                                            <tr class="border-b">
+                                            <tr class="border-b border-gray-200 dark:border-gray-700">
                                                 <td class="py-4 pr-2 align-top">
-                                                    <div class="font-medium text-gray-900">${exercise.name}</div>
-                                                    <div class="text-xs text-gray-500 mt-1 max-w-xs">${exercise.description}</div>
+                                                    <div class="flex items-baseline space-x-3">
+                                                        <div class="font-medium text-gray-900 dark:text-gray-100">${exercise.name}</div>
+                                                        <div class="text-sm font-semibold text-blue-600 dark:text-blue-400">${exercise.goal}</div>
+                                                    </div>
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs">${exercise.description}</div>
                                                 </td>
                                                 ${[...Array(7)].map((_, i) => `
-                                                    <td class="w-12 text-center py-4 align-top">
-                                                        <input type="checkbox" data-day="${dayKey}" data-exercise="${exercise.name}" data-day-index="${i}" class="h-5 w-5 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                                    <td class="text-center py-4 px-3 align-top">
+                                                        <input type="checkbox" data-day="${dayKey}" data-exercise="${exercise.name}" data-day-index="${i}" class="h-5 w-5 rounded-md border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-blue-600 dark:text-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 cursor-pointer">
                                                     </td>
                                                 `).join('')}
                                             </tr>
@@ -180,8 +240,7 @@
             }
 
             function addEventListeners() {
-                const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-                checkboxes.forEach(checkbox => {
+                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                     checkbox.addEventListener('change', handleCheckboxChange);
                 });
             }
@@ -190,6 +249,5 @@
         });
     </script>
 
-    
 </body>
 </html>

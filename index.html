@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- 
         Chosen Palette: Serene Neutrals
-        Application Structure Plan: The application is structured using a card-based layout to clearly separate the 'Push', 'Pull', and 'Leg' workout days, which is more intuitive than a single large table. This modular design allows users to focus on one workout at a time. The user flow is simple: view the day's workout, check off completed exercises, and see a progress bar update in real-time. This structure was chosen for its clarity, mobile-friendliness, and ability to provide immediate visual feedback, enhancing usability over the static source table.
+        Application Structure Plan: The application is structured using a card-based layout to clearly separate the 'Warm-up', 'Arms and biceps', and 'Leg and abs' workout days, which is more intuitive than a single large table. This modular design allows users to focus on one workout at a time. The user flow is simple: view the day's workout, check off completed exercises, and see a progress bar update in real-time. This structure was chosen for its clarity, mobile-friendliness, and ability to provide immediate visual feedback, enhancing usability over the static source table.
         Visualization & Content Choices: The core information is the workout list. Goal: Allow users to track weekly completion. Presentation: Styled HTML cards for each workout day. Interaction: Users click checkboxes for each of the 7 days. JavaScript saves the state to browser localStorage, making the app persistent without a database. A dynamic progress bar for each card provides instant visual feedback on completion. Justification: This approach turns a static list into a functional, stateful application, improving user engagement and utility. Method: Vanilla JavaScript for all logic, Tailwind CSS for styling. No complex libraries like Chart.js are needed, as progress bars are implemented with simple HTML/CSS.
         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
     -->
@@ -25,13 +25,48 @@
         .progress-bar-fill {
             transition: width 0.3s ease-in-out;
         }
-        /* Toggle Switch Styles */
-        .toggle-checkbox:checked {
-            right: 0;
-            border-color: #4f46e5;
+        /* Material Design Checkbox Styles */
+        .custom-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+            display: inline-block;
+            vertical-align: middle;
         }
-        .toggle-checkbox:checked + .toggle-label {
-            background-color: #4f46e5;
+        /* Light Mode */
+        .custom-checkbox {
+            background-color: transparent;
+            border: 2px solid #9ca3af; /* gray-400 */
+        }
+        .custom-checkbox:checked {
+            background-color: #22c55e; /* green-500 */
+            border-color: #22c55e;
+        }
+        /* Dark Mode */
+        .dark .custom-checkbox {
+            border-color: #6b7280; /* gray-500 */
+        }
+        .dark .custom-checkbox:checked {
+            background-color: #4ade80; /* green-400 */
+            border-color: #4ade80;
+        }
+        /* Checkmark */
+        .custom-checkbox:checked::after {
+            content: '';
+            display: block;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+            position: absolute;
+            top: 1px;
+            left: 5px;
         }
     </style>
 </head>
@@ -101,43 +136,37 @@
             });
             
             const workoutData = {
-                push: {
-                    title: "Push Day",
+                warmup: {
+                    title: "Warm-up",
                     exercises: [
-                        { name: "Bench Press", goal: "3 sets of 5-8 reps", description: "Lie on a flat bench, lower the barbell to your mid-chest, then press it back up." },
-                        { name: "Overhead Press", goal: "3 sets of 8-12 reps", description: "Sit or stand, press dumbbells overhead until arms are fully extended." },
-                        { name: "Incline Dumbbell Press", goal: "3 sets of 8-12 reps", description: "Lie on an incline bench, press dumbbells up from chest level until arms are extended." },
-                        { name: "Lateral Raises", goal: "4 sets of 12-15 reps", description: "Stand and raise dumbbells out to your sides until they are at shoulder level." },
-                        { name: "Tricep Pushdowns", goal: "3 sets of 10-15 reps", description: "Use a high pulley to push a bar or rope down until your arms are fully extended." },
-                        { name: "Skull Crushers", goal: "3 sets of 10-15 reps", description: "Lie on a bench and lower a barbell or EZ bar towards your forehead, then extend back up." },
-                        { name: "Dumbbell Flyes", goal: "3 sets of 10-15 reps", description: "Lie on a flat bench and lower dumbbells in a wide arc until you feel a stretch in your chest." },
-                        { name: "Cable Crossover", goal: "3 sets of 12-15 reps", description: "From a cable machine, bring your hands together in front of your body in a hugging motion." },
-                        { name: "Dips", goal: "3 sets to failure", description: "On parallel bars, lower your body until shoulders are below elbows, then press up." }
+                        { name: "Bike", goal: "30 minutes", description: "Maintain a steady pace to increase blood flow and warm up your muscles." },
+                        { name: "Rowing Machine", goal: "10 minutes", description: "Use smooth, controlled strokes for a full-body warm-up." }
                     ]
                 },
-                pull: {
-                    title: "Pull Day",
+                armsBiceps: {
+                    title: "Arms and Biceps",
                     exercises: [
-                        { name: "Pull-ups / Lat Pulldowns", goal: "3 sets to failure or 8-12 reps", description: "Hang from a bar and pull your chest to it, or pull a bar down to your upper chest." },
-                        { name: "Barbell Rows", goal: "3 sets of 6-10 reps", description: "Bend over with a straight back and pull a barbell towards your lower chest." },
-                        { name: "T-Bar Rows", goal: "3 sets of 8-12 reps", description: "Pull a T-bar handle towards your chest, keeping your back straight." },
-                        { name: "Face Pulls", goal: "4 sets of 15-20 reps", description: "Use a cable machine to pull a rope attachment towards your face, squeezing your rear delts." },
-                        { name: "Barbell Curls", goal: "3 sets of 8-12 reps", description: "Stand and curl a barbell towards your shoulders, keeping elbows at your sides." },
-                        { name: "Hammer Curls", goal: "3 sets of 10-15 reps", description: "Curl dumbbells with palms facing each other, like swinging a hammer." },
-                        { name: "Dumbbell Rows", goal: "3 sets of 8-12 reps per arm", description: "With one knee on a bench, pull a dumbbell up to your chest, keeping your back straight." },
-                        { name: "Seated Cable Rows", goal: "3 sets of 10-15 reps", description: "Sit at a cable machine and pull the handle towards your abdomen, squeezing your back." },
-                        { name: "Preacher Curls", goal: "3 sets of 10-15 reps", description: "On a preacher bench, curl an EZ bar or dumbbell towards your shoulders." }
+                        { name: "Bench Press", goal: "3 sets (10-15 reps)", description: "Lie on a flat bench, lower the barbell to your mid-chest, then press it back up." },
+                        { name: "Incline Bench Press", goal: "3 sets (10-15 reps)", description: "Lie on an incline bench, press dumbbells up from chest level until arms are extended." },
+                        { name: "Lever Seated Shoulder Press", goal: "3 sets (10-15 reps)", description: "Sit on a shoulder press machine and press the handles overhead." },
+                        { name: "Biceps Curls", goal: "3 sets (10-15 reps)", description: "Stand and curl a barbell towards your shoulders, keeping elbows at your sides." },
+                        { name: "Triceps Pushdown", goal: "3 sets (10-15 reps)", description: "Use a high pulley to push a bar or rope down until your arms are fully extended." },
+                        { name: "Cable Standing Fly", goal: "3 sets (10-15 reps)", description: "From a cable machine, bring your hands together in front of your body in a hugging motion." },
+                        { name: "Biceps Curls with Dumbbells", goal: "3 sets (8-12 reps)", description: "Stand or sit, and curl dumbbells towards your shoulders." },
+                        { name: "Hammer Curl", goal: "3 sets (8-12 reps)", description: "Curl dumbbells with palms facing each other, like swinging a hammer." },
+                        { name: "Bar Lateral Pulldown", goal: "3 sets (10-15 reps)", description: "Sit at a lat pulldown machine and pull the bar down to your upper chest." },
+                        { name: "Straight Back Seated Row", goal: "3 sets (10-15 reps)", description: "Sit at a cable machine and pull the handle towards your abdomen, keeping your back straight." }
                     ]
                 },
-                legs: {
-                    title: "Leg Day",
+                legsAbs: {
+                    title: "Leg and Abs",
                     exercises: [
                         { name: "Squats", goal: "3 sets of 6-10 reps", description: "With a barbell on your back, lower your hips as if sitting in a chair, then stand back up." },
-                        { name: "Romanian Deadlifts", goal: "3 sets of 8-12 reps", description: "Hinge at your hips to lower a barbell, keeping legs straight, to stretch your hamstrings." },
-                        { name: "Leg Press", goal: "3 sets of 10-15 reps", description: "Sit on the machine and push the platform away by extending your knees." },
-                        { name: "Leg Curls", goal: "3 sets of 12-15 reps", description: "Lie face down and curl a padded lever up towards your glutes with your legs." },
-                        { name: "Leg Extensions", goal: "3 sets of 12-15 reps", description: "Sit on the machine and extend your legs against a padded lever until they are straight." },
-                        { name: "Calf Raises", goal: "4 sets of 15-20 reps", description: "Stand on an elevated surface and press up onto your toes, then lower your heels." }
+                        { name: "Calf Raises", goal: "4 sets of 15-20 reps", description: "Stand on an elevated surface and press up onto your toes, then lower your heels." },
+                        { name: "Lever Seated Leg Press", goal: "3 sets (10-15 reps)", description: "Sit on the machine and push the platform away using the levers." },
+                        { name: "Lever Leg Extension", goal: "3 sets (10-15 reps)", description: "Sit on the machine and extend your legs up against the padded lever." },
+                        { name: "Lever Seated Leg Curl", goal: "3 sets (10-15 reps)", description: "Sit on the machine and curl the padded lever down with your legs." },
+                        { name: "Kettlebell Squats", goal: "3 sets (10-15 reps)", description: "Hold a kettlebell at your chest and perform a squat, keeping your back straight." }
                     ]
                 }
             };
@@ -168,16 +197,16 @@
                                     <tbody>
                                         ${dayData.exercises.map(exercise => `
                                             <tr class="border-b border-gray-200 dark:border-gray-700">
-                                                <td class="py-4 pr-2 align-top">
-                                                    <div class="flex items-baseline space-x-3">
+                                                <td class="py-5 pr-2 align-top">
+                                                    <div>
                                                         <div class="font-medium text-gray-900 dark:text-gray-100">${exercise.name}</div>
-                                                        <div class="text-sm font-semibold text-blue-600 dark:text-blue-400">${exercise.goal}</div>
+                                                        <div class="text-sm font-semibold text-blue-600 dark:text-blue-400 mt-1">${exercise.goal}</div>
+                                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs">${exercise.description}</div>
                                                     </div>
-                                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs">${exercise.description}</div>
                                                 </td>
                                                 ${[...Array(7)].map((_, i) => `
-                                                    <td class="text-center py-4 px-3 align-top">
-                                                        <input type="checkbox" data-day="${dayKey}" data-exercise="${exercise.name}" data-day-index="${i}" class="h-5 w-5 rounded-md border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-blue-600 dark:text-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 cursor-pointer">
+                                                    <td class="text-center py-5 px-3 align-top">
+                                                        <input type="checkbox" data-day="${dayKey}" data-exercise="${exercise.name}" data-day-index="${i}" class="custom-checkbox">
                                                     </td>
                                                 `).join('')}
                                             </tr>
